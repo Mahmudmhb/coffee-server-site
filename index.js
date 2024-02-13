@@ -12,6 +12,7 @@ app.use(express.json())
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { emit } = require('nodemon');
 const uri = "mongodb+srv://coffee-emporium:IMEUetdLFJgoF5lH@cluster0.gegfn.mongodb.net/?retryWrites=true&w=majority";
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -31,13 +32,46 @@ async function run() {
     await client.db("admin").command({ ping: 1 });
 
     const database = client.db("coffeesDB").collection('newCoffees')
+    const UserCollection = client.db('coffeesDB').collection('newSigenUp')
     // const haiku = database.collection("haiku");
+app.post('/users', async(req, res)=>{
+  const user = req.body
+  const result = await UserCollection.insertOne(user)
+  res.send(result)
+})
 
-    app.get('/coffees', async(req, res) =>{
-        const cursor = database.find();
-        const result = await cursor.toArray()
-        res.send(result)
-    })
+app.get('/users', async(req, res) =>{
+  const cursor = UserCollection.find()
+  const result = await cursor.toArray()
+  res.send(result)
+})
+
+app.delete('/users/:id', async(req, res)=>{
+  const id = req.params.id
+  console.log(id)
+  const filter = {_id: new ObjectId(id)}
+  const result = await UserCollection.deleteOne(filter)
+  console.log(result)
+  res.send(result)
+})
+app.patch('/users', async(req, res)=>{
+  const user = req.body;
+  const filter = {email : user.email}
+  const updateDoc = {
+    $set: {
+      lastTimelogin: user.lastTimelogin
+    },
+  };
+  const result = await UserCollection.updateOne(filter, updateDoc)
+  res.send(result)
+})
+
+app.get('/coffees', async(req, res) =>{
+    const cursor = database.find();
+    const result = await cursor.toArray()
+    res.send(result)
+})
+
 app.post('/coffees', async(req, res)=>{
     const coffee = req.body
     console.log('hitting to cilent side' ,coffee)
